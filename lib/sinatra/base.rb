@@ -10,14 +10,9 @@ require 'uri'
 
 # other files we need
 require 'sinatra/show_exceptions'
+require 'sinatra/file'
 require 'sinatra/version'
 
-module Rack
-  class File
-    ALLOWED_VERBS = %w[GET HEAD OPTIONS POST]
-    ALLOW_HEADER = ALLOWED_VERBS.join(', ')
-  end
-end
 
 module Sinatra
   # The request object. See Rack::Request for more info:
@@ -246,7 +241,7 @@ module Sinatra
         def block.each; yield(call) end
         response.body = block
       elsif value
-        headers.delete 'Content-Length' unless request.head? || value.is_a?(Rack::File) || value.is_a?(Stream)
+        headers.delete 'Content-Length' unless request.head? || value.is_a?(Sinatra::RackFile) || value.is_a?(Stream)
         response.body = value
       else
         response.body
@@ -369,7 +364,7 @@ module Sinatra
 
       last_modified opts[:last_modified] if opts[:last_modified]
 
-      file   = Rack::File.new(File.dirname(settings.app_file))
+      file   = Sinatra::RackFile.new(File.dirname(settings.app_file))
       result = file.call(env)
       result[1].each { |k,v| headers[k] ||= v }
       headers['Content-Length'] = result[1]['Content-Length']
